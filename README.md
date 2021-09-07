@@ -10,7 +10,7 @@ How can we attract more men to donate blood? One possibility is based on the ide
 
 ## Method
 Viewed one of three images
-![alt text]https://github.com/miiichaellam/bloodbandage/blob/main/target.png
+![alt text]https://github.com/miiichaellam/bloodbandage/blob/main/target.png?raw=true
 
 ## Conclusion
 - Wearing a subtly marked bandage more effectively communicates that you donated blood than wearing than routinely applied bandages.
