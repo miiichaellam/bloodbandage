@@ -13,12 +13,14 @@ editor_options:
 library(tidyverse) # general use
 library(afex) # running ANOVA
 library(emmeans) # follow up effects on ANOVA
+library(ggsignif) # 
+library(ggtext) # adding color in title
 
 # Read and clean data
 data<- read_csv("data.csv")%>%
   filter(attention.check == "pass")%>% # only including participants who passed
   rowid_to_column(var = "id")%>% # assign id to rows
-  mutate_if(is.character, as.factor) # convert all characters to factor
+  mutate(across(where(is.character),factor)) # convert all characters to factor
 ```
 
 # Creating measures
@@ -41,7 +43,7 @@ data<-data%>%
     )
 ```
 
-# Confirmatory analyses: ANOVAs
+# Confirmatory analyses
 For each dependent variable we run an ANOVA with the two main effects (condition and participant gender) and the interaction term of the main effects.
 The Holm-Bonferroni correction was used to adjust the alpha level for the ANOVAs to control for inflated Type 1 error arising from conducting exploratory analyses. Traits (6 measures) and benefits (3 measures) are separate hypotheses. Thus the corrected alpha level for ANOVA with the lowest p value testing each of the hypothesis is:
 - Traits = 008 (.05/6)
@@ -175,177 +177,70 @@ short.att.model<- aov_car(short.att~condition*gender+ Error (id),
                          anova_table = list (es = "pes"))
 ```
 
-# Exploratory analyses
-## Moderated Mediation
+
+## Visualisation
+Plots the key results of generosity, health, and self promotion
 ```{r}
-# Smaller working DF
-wdata<- data%>%select(condition,gender,short.att,long.att,attractive,generous) 
-
-# DF: Blood vs Control
-df1 <- wdata%>%filter(condition == 'blood'|condition == 'control')%>%droplevels() # make pairwise comparison
-df1<-df1%>%mutate(gender = ifelse(gender == 'Male',0,1)) # convert gender 
-df1<- make_numeric(var = 'condition', ref = 'control', newvar = 'condition1',data = df1) # turn condition to numeric
-
-# DF: Bandage vs Control
-df2 <- wdata%>%filter(condition == 'bandage'|condition == 'control')%>%droplevels() # make pairwise comparison
-df2<- make_numeric(var = 'condition', ref = 'control', newvar = 'condition1',data = df2) # condition to numeric
-df2<-df2%>%mutate(gender = ifelse(gender == 'Male',0,1)) # convert gender 
-
-# DF: Bandage vs Blood
-df3 <- wdata%>%filter(condition == 'blood'|condition == 'bandage')%>%droplevels() # make pairwise comparison
-df3<- make_numeric(var = 'condition', ref = 'bandage', newvar = 'condition1',data = df3) # condition to numeric
-df3<-df3%>%mutate(gender = ifelse(gender == 'Male',0,1)) # convert gender 
-```
-### Blood vs control
-```{r}
-# Long term desirability
-mod7.long <- model7(iv = 'condition1',
-               dv = 'long.att',
-               med = 'generous',
-               mod = 'gender',
-               data = df1)
-
-# Short term desirability
-mod7.short <- model7(iv = 'condition1',
-                          dv = 'short.att',
-                          med = 'generous',
-                          mod = 'gender',
-                          data = df1)
-
-# Attractiveness
-mod7.attractive <- model7(iv = 'condition1',
-                          dv = 'attractive',
-                          med = 'generous',
-                          mod = 'gender',
-                          data = df1)
-
-# Print models
-print(mod7.long)
-print(mod7.attractive)
-print(mod7.short)
-
-```
-
-### Bandage vs control
-```{r}
-# Long term
-mod7.v2.long <- model7(iv = 'condition1',
-                          dv = 'long.att',
-                          med = 'generous',
-                          mod = 'gender',
-                          data = df2)
-
-# Short term
-mod7.v2.short <- model7(iv = 'condition1',
-                           dv = 'short.att',
-                           med = 'generous',
-                           mod = 'gender',
-                           data = df2)
-
-# Attractiveness
-mod7.v2.attractive <- model7(iv = 'condition1',
-                                dv = 'attractive',
-                                med = 'generous',
-                                mod = 'gender',
-                                data = df2)
-
-# Print models
-print(mod7.v2.long)
-print(mod7.v2.short)
-print(mod7.v2.attractive)
-```
-
-### Bandage vs blood
-```{r}
-# Long term
-mod7.v3.long <- model7(iv = 'condition1',
-                          dv = 'long.att',
-                          med = 'generous',
-                          mod = 'gender',
-                          data = df3)
-      
-# Short term
-mod7.v3.short <- model7(iv = 'condition1',
-                           dv = 'short.att',
-                           med = 'generous',
-                           mod = 'gender',
-                           data = df3)
-      
-# Attractiveness
-mod7.v3.attractive <- model7(iv = 'condition1',
-                                dv = 'attractive',
-                                med = 'generous',
-                                mod = 'gender',
-                                data = df3)
-      
-
-# Print models
-print(mod7.v3.long)
-print(mod7.v3.short)
-print(mod7.v3.attractive)
-```
-
-
-## Reviewer requested analyses: Three way anova with blood status,bandage condition, and participant gender
-```{r}
-# Generous
-summary(aov_car(generous~condition*blood*gender+ Error (id),
-                         data = data, anova_table = list (es = "pes")))
-# Competence
-summary(aov_car(competence~condition*blood*gender+ Error (id),
-                          data = data,anova_table = list (es = "pes")))
-# Morality
-summary(aov_car(morality~condition*blood*gender+ Error (id),
-                        data = data, anova_table = list (es = "pes")))
-# Warmth
-summary(aov_car(warmth~condition*blood*gender+ Error (id),
-                      data = data, anova_table = list (es = "pes")))
-# Health
-summary(aov_car(health~condition*blood*gender+ Error (id),
-                      data = data, anova_table = list (es = "pes")))
-
-# Self promotion
-summary(aov_car(self.promotion~condition*blood*gender+ Error (id),
-                         data = data,anova_table = list (es = "pes")))
-# Attractive
-summary(aov_car(attractive~condition*blood*gender+ Error (id),
-                          data = data,anova_table = list (es = "pes")))
-
-# Long term attractiveness
-summary(aov_car(long.att~condition*blood*gender+ Error (id),
-                         data = data,anova_table = list (es = "pes")))
-# Short term attractiveness
-ea_model<-aov_car(short.att~condition*blood*gender+ Error (id),
-                         data = data,anova_table = list (es = "pes"))
-## Follow up two way interaction in short-term attractiveness
-emmeans(ea_model,~gender|blood)%>%pairs(.,adjust = "tukey")
-## Descriptives
-data%>%group_by(blood,gender)%>%summarise(m = mean(short.att), sd = sd(short.att))
-
-```
-
-## Plotting interaction
-```{r}
-# OLD 
-data%>%
+plot<-data%>%
   mutate(condition = fct_recode(condition,
-                                "Blood branded bandage" = "blood",
+                                "Blood bandage" = "blood",
                                 "Plain bandage" = "bandage",
-                                "Control (No bandage)" = "control"
+                                "No bandage" = "control"
                                 ))%>%
-  ggplot(aes(x = condition, y = generous, color = condition)) +
-  geom_boxplot(show.legend = F) +
+  select(id,condition,self.promotion,health,generous) %>% # Select columns of interest
+  # Make longer to plot with facet
+  pivot_longer(cols = -c(id,condition),
+               names_to = "trait",
+               values_to = "rating") %>% 
+  ggplot(aes(x = condition, y = rating, color = condition)) +
+  geom_boxplot() +
+  #ggsignif::geom_signif(comparisons = list(c("Blood bandage","Plain bandage","No bandage")),map_signif_level = T) +
   geom_jitter(alpha = 0.2,show.legend = F) +
   stat_summary(fun =mean,geom="point", show.legend = F,
                            shape=18, size=5) +
-  #stat_n_text(text.box = T) +
-  ggrepel::geom_label_repel(stat = 'summary', fun=mean, aes(label = round(..y.., 2)), nudge_x = 0.1, hjust = 0,show.legend = F) +
-  facet_wrap(~gender, nrow = 1) +
-  scale_y_continuous(limits = c(0,8), breaks = seq(1, 7, by = 1)) +
-  labs(x = "Bandage type", y = "Perception of generosity") +
-  scale_color_viridis_d() +
-  theme_bw() +
-  ggsave("/Users/michaellam/Desktop/R_DATA_FILES/bandage revisions/toupload/s1_plot.png", units = "in",  height = 6, width = 12)
+  ggrepel::geom_label_repel(stat = 'summary', fun=mean, 
+                            aes(label = str_c("Mean = ",round(..y.., 2))), nudge_x = 0.15, 
+                            show.legend = F,box.padding = 3, size = 4,
+                            segment.angle = 20,arrow = arrow(length = unit(0.015, "npc"))) +
+  facet_wrap(~recode_factor(trait,
+                            generous = "Generosity",
+                            health = "Healthiness",
+                            self.promotion = "Self promotional"),
+                     nrow = 1) +
+  scale_y_continuous(breaks = seq(1, 7, by = 1)) +
+  scale_color_manual(values = c("#414487","#23888e","#35b779")) + # Choose colors
+  labs(title = "How do people judge <span style = 'color:#23888e;'>branded bandage</span>,<span style = 'color:#414487;'>plain bandage</span>, and <span style = 'color:#35b779;'>no bandage</span> wearers?",
+       subtitle = "Wearing a <span style = 'color:#23888e;'>branded bandage</span> was rated as more generous, equally healthy and not self-promotional than wearing <span style = 'color:#35b779;'>no bandage</span>. <br>Compared to wearing <span style = 'color:#35b779;'>no bandage</span>, having a <span style = 'color:#414487;'>plain bandage</span>was also seen as more generous but also less healthier.",
+       x = NULL, y = "Level") +
+  theme_light() +
+  theme(
+      # keeps only horizontal lines
+      panel.grid.major.x= element_blank(), 
+      panel.grid.minor.x = element_blank(),
+      # Title & subtitle
+      plot.title = element_markdown(size = 25, hjust = 0, vjust = 0.5, face = "bold",
+                                margin = margin(b = .3, unit = "cm")),
+      plot.subtitle = element_markdown(size = 15, hjust = 0, vjust = 0.5, colour = "grey45",
+                                   margin = margin(b = 0.3, unit = "cm")),
+      # Caption
+      plot.caption = element_text(size = 10, hjust = 1, face = "italic", colour = "grey70",
+                                  margin = margin(t = 0.1, unit = "cm")),
+      # X - axis
+      axis.title.x = element_text(margin = margin(t = .5,unit = "cm"), size = 13,color = "grey50"),
+      axis.text.x = element_blank(),
+      axis.text.y = element_text(size = 13),
+      axis.ticks.x = element_blank(),
+      # Y - axis
+      axis.title.y = element_text(margin = margin(r = .5, unit = "cm"), size = 13, color = "grey50",angle = 90),
+      # Legend
+      legend.position = "none",
+      # Facet wrap
+      strip.background = element_rect(fill = "white"),
+      strip.text = element_text(size = 12,face = "bold",color = "black"),
+    )
+
+# Save
+ggsave(plot,filename = "results.png",width = 14,height = 6,dpi = 600)
 
 ```
 
