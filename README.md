@@ -11,8 +11,7 @@ Survey respondents viewed one of three images and rated the person on various di
 ![alt text](https://github.com/miiichaellam/bloodbandage/blob/main/target.png?raw=true)
 
 ## Results
-- ANOVA table
-- Plot of results
+![alt text](https://github.com/miiichaellam/bloodbandage/blob/main/results.png?raw=true)
 
 ## Conclusion
 - Wearing a subtly marked bandage more effectively communicates that you donated blood than wearing than routinely applied bandages.
